@@ -2,10 +2,9 @@
 // Created by glumes on 2021/3/3.
 //
 
-#ifndef VULKANCAMERA_FILTERDEFINE_H
-#define VULKANCAMERA_FILTERDEFINE_H
+#pragma once
 
-#include <vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 
 typedef struct  FilterPipeline{
     VkDescriptorSetLayout descLayout_;
@@ -34,6 +33,3 @@ typedef struct FilterFramebuffer{
     int width;
     int height;
 } FilterFramebuffer;
-
-
-#endif //VULKANCAMERA_FILTERDEFINE_H

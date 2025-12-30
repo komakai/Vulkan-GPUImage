@@ -44,22 +44,21 @@ VKEngineRenderer::~VKEngineRenderer() {
 void VKEngineRenderer::init(ANativeWindow *window, size_t width, size_t height,AAssetManager* manager) {
     m_backingWidth = width;
     m_backingHeight = height;
+    m_assetLoader = AssetLoader::create(manager);
+#ifndef NDEBUG
+//    m_enableValidationLayers = true;
+#endif
 
-    aAssetManager = manager;
-
-    if (!InitVulkan()) {
-        LOGE("Vulkan is unavailable, install vulkan and re-start");
-        return;
-    }
+    assert(!m_enableValidationLayers || checkValidationLayerSupport());
 
     VkApplicationInfo appInfo = {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
             .pNext = nullptr,
-            .apiVersion = VK_MAKE_VERSION(1, 0, 0),
-            .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-            .engineVersion = VK_MAKE_VERSION(1, 0, 0),
             .pApplicationName = "camera2GLPreview",
+            .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
             .pEngineName = "camera",
+            .engineVersion = VK_MAKE_VERSION(1, 0, 0),
+            .apiVersion = VK_MAKE_VERSION(1, 0, 0),
     };
 
     createDevice(window, &appInfo);
@@ -69,8 +68,8 @@ void VKEngineRenderer::init(ANativeWindow *window, size_t width, size_t height,A
 void VKEngineRenderer::render() {
     uint32_t nextIndex;
 
-    CALL_VK(vkAcquireNextImageKHR(vkDeviceInfo->device, vkSwapChainInfo->swapchain, UINT64_MAX, vkRenderInfo->semaphore, VK_NULL_HANDLE, &nextIndex));
-    CALL_VK(vkResetFences(vkDeviceInfo->device,1,&vkRenderInfo->fence));
+    CALL_VK(vkAcquireNextImageKHR(vkDeviceInfo->device, vkSwapChainInfo->swapchain, UINT64_MAX, vkRenderInfo->semaphore, VK_NULL_HANDLE, &nextIndex))
+    CALL_VK(vkResetFences(vkDeviceInfo->device,1,&vkRenderInfo->fence))
 
     VkPipelineStageFlags waitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     VkSubmitInfo submitInfo = {};
@@ -89,23 +88,23 @@ void VKEngineRenderer::render() {
         return ;
     }
 
-    CALL_VK(vkQueueSubmit(vkDeviceInfo->queue,1,&submitInfo,vkRenderInfo->fence));
-    CALL_VK(vkWaitForFences(vkDeviceInfo->device,1,&vkRenderInfo->fence,VK_TRUE,100000000));
+    CALL_VK(vkQueueSubmit(vkDeviceInfo->queue,1,&submitInfo,vkRenderInfo->fence))
+    CALL_VK(vkWaitForFences(vkDeviceInfo->device,1,&vkRenderInfo->fence,VK_TRUE,100000000))
 
     VkResult result;
     VkPresentInfoKHR presentInfo{
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pNext = nullptr,
-        .swapchainCount = 1,
-        .pSwapchains = &vkSwapChainInfo->swapchain,
-        .pImageIndices = &nextIndex,
-        .waitSemaphoreCount = 0,
-        .pWaitSemaphores = nullptr,
-        .pResults = &result
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 0,
+            .pWaitSemaphores = nullptr,
+            .swapchainCount = 1,
+            .pSwapchains = &vkSwapChainInfo->swapchain,
+            .pImageIndices = &nextIndex,
+            .pResults = &result
     };
 
     vkQueuePresentKHR(vkDeviceInfo->queue,&presentInfo);
-};
+}
 
 void VKEngineRenderer::updateFrame(const video_frame &frame) {
 
@@ -148,8 +147,7 @@ VKEngineRenderer::draw(uint8_t *buffer, size_t length, size_t width, size_t heig
 
         createOffscreenReaderPassAndFramebuffer();
 
-        offscreenFilter->init(vkDeviceInfo->device,vkOffScreenInfo->offscreenPass.renderPass);
-
+        offscreenFilter->init(vkDeviceInfo->device, vkOffScreenInfo->offscreenPass.renderPass, m_assetLoader);
 
         std::vector<VkDescriptorBufferInfo> vecBufferInfo;
         vecBufferInfo.resize(1);
@@ -163,7 +161,7 @@ VKEngineRenderer::draw(uint8_t *buffer, size_t length, size_t width, size_t heig
 
         vecBufferInfo[0] = bufferInfo;
 
-        LOGI("zhy vec buffer info size is %d",vecBufferInfo.size());
+        LOGI("zhy vec buffer info size is %ul", vecBufferInfo.size());
 
         std::vector<VkDescriptorImageInfo> vecImageInfo;
         vecImageInfo.resize(3);
@@ -173,7 +171,7 @@ VKEngineRenderer::draw(uint8_t *buffer, size_t length, size_t width, size_t heig
         for (int i = 0; i < 3; ++i) {
             texDsts[i].sampler = vkTextureInfo->textures[i].sampler;
             texDsts[i].imageView = vkTextureInfo->textures[i].view;
-            texDsts[i].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            texDsts[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             vecImageInfo[i] = texDsts[i];
         }
 
@@ -182,13 +180,13 @@ VKEngineRenderer::draw(uint8_t *buffer, size_t length, size_t width, size_t heig
 
         offscreenFilter->updateDescriptorSet(vecBufferInfo,vecImageInfo);
 
-        effectFilter->init(vkDeviceInfo->device,vkOffScreenInfo->offscreenPass.renderPass);
+        effectFilter->init(vkDeviceInfo->device, vkOffScreenInfo->offscreenPass.renderPass, m_assetLoader);
 
         effectFilter->updateDescriptorSet(vkOffScreenInfo->offscreenPass.descriptor[0].sampler,
                                           vkOffScreenInfo->offscreenPass.descriptor[0].imageView,
                                           VK_IMAGE_LAYOUT_GENERAL);
 
-        vulkanFilter->init(vkDeviceInfo->device,vkRenderInfo->renderPass);
+        vulkanFilter->init(vkDeviceInfo->device, vkRenderInfo->renderPass, m_assetLoader);
 
         vulkanFilter->updateDescriptorSet(
                 vkOffScreenInfo->offscreenPass.descriptor[1].sampler,
@@ -215,7 +213,7 @@ VKEngineRenderer::draw(uint8_t *buffer, size_t length, size_t width, size_t heig
 //        effectFilter = FilterUtil::getFilterByType(m_filter);
         effectFilter = FilterUtil::getFilterByType(m_filter);
 
-        effectFilter->init(vkDeviceInfo->device,vkOffScreenInfo->offscreenPass.renderPass);
+        effectFilter->init(vkDeviceInfo->device,vkOffScreenInfo->offscreenPass.renderPass, m_assetLoader);
 
 
         std::vector<VkDescriptorBufferInfo> vecBufferInfo;
@@ -247,10 +245,10 @@ VKEngineRenderer::draw(uint8_t *buffer, size_t length, size_t width, size_t heig
     }
 
 
-    if (m_CurrentProcess != m_LastProcess){
-        m_LastProcess = m_CurrentProcess;
+    if (m_CurrentProgress != m_LastProgress){
+        m_LastProgress = m_CurrentProgress;
         createCommandPool();
-        LOGE("zhy m_CurrentProcess != m_LastProcess create command pool");
+        LOGI("zhy m_CurrentProgress != m_LastProgress create command pool");
     }
 
     updateTextures();
@@ -288,7 +286,7 @@ void VKEngineRenderer::deleteTextures() {
 
 
 void VKEngineRenderer::createDevice(ANativeWindow *platformWindow, VkApplicationInfo *appInfo) {
-    vkDeviceInfo->createDevice(platformWindow, appInfo);
+    vkDeviceInfo->createDevice(platformWindow, appInfo, m_enableValidationLayers);
 }
 
 void VKEngineRenderer::createSwapChain() {
@@ -339,10 +337,34 @@ void VKEngineRenderer::createOffscreenReaderPassAndFramebuffer() {
     vkOffScreenInfo->createOffscreen(vkDeviceInfo,vkSwapChainInfo);
 }
 
-void VKEngineRenderer::setProcess(uint32_t process) {
-    m_CurrentProcess = process;
+void VKEngineRenderer::setProgress(uint32_t progress) {
+    m_CurrentProgress = progress;
 
     if (effectFilter != nullptr){
-        effectFilter->setProcess(m_CurrentProcess);
+        effectFilter->setProgress(m_CurrentProgress);
     }
+}
+
+bool VKEngineRenderer::checkValidationLayerSupport() {
+    const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+    uint32_t layerCount;
+    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+    std::vector<VkLayerProperties> availableLayers(layerCount);
+    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+    for (const char *layerName : validationLayers) {
+        bool layerFound = false;
+        for (const auto &layerProperties : availableLayers) {
+            if (strcmp(layerName, layerProperties.layerName) == 0) {
+                layerFound = true;
+                break;
+            }
+        }
+
+        if (!layerFound) {
+            return false;
+        }
+    }
+    return true;
 }

@@ -1,5 +1,4 @@
-#ifndef _H_VIDEO_RENDERER_CONTEXT_
-#define _H_VIDEO_RENDERER_CONTEXT_
+#pragma once
 
 #include "VideoRenderer.h"
 
@@ -17,13 +16,13 @@ public:
 	};
 
 	VideoRendererContext(int type);
-	~VideoRendererContext();
+	~VideoRendererContext() = default;
 
     void init(ANativeWindow* window, size_t width, size_t height,AAssetManager* manager);
 	void render();
 	void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation);
 	void setParameters(uint32_t params);
-	void setProcess(uint32_t params);
+	void setProgress(uint32_t params);
 	uint32_t getParameters();
 
 	static void createContext(JNIEnv *env, jobject obj, jint type);
@@ -31,7 +30,6 @@ public:
 	static void deleteContext(JNIEnv *env, jobject obj);
 	static VideoRendererContext* getContext(JNIEnv *env, jobject obj);
 
-	AAssetManager* manager ;
 
 private:
     std::unique_ptr<VideoRenderer> m_pVideoRenderer;
@@ -39,11 +37,3 @@ private:
 	static jni_fields_t jni_fields;
 
 };
-
-////
-//// AAssetManager*  VideoRendererContext::manager = nullptr ;
-////
-//
-//AAssetManager* VideoRendererContext::manager = nullptr;
-
-#endif // _H_VIDEO_RENDERER_CONTEXT_

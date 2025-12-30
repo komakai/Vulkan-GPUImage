@@ -20,7 +20,7 @@
         android:theme="@style/AppTheme">
 
 
-        <activity android:name=".activity.VKActivity">
+        <activity android:name=".activity.VKActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

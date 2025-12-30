@@ -2,10 +2,9 @@
 // Created by glumes on 2021/3/3.
 //
 
-#ifndef VULKANCAMERA_VULKANINITIALIZERS_H
-#define VULKANCAMERA_VULKANINITIALIZERS_H
+#pragma once
 
-#include <vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 #include <string>
 #include <vector>
 
@@ -557,6 +556,3 @@ namespace vks {
         return specializationInfo;
     }
 }
-
-
-#endif //VULKANCAMERA_VULKANINITIALIZERS_H

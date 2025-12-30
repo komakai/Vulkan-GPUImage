@@ -14,11 +14,6 @@ VideoRenderer::VideoRenderer()
 
 }
 
-VideoRenderer::~VideoRenderer()
-{
-
-}
-
 std::unique_ptr<VideoRenderer> VideoRenderer::create(int type)
 {
 	return std::unique_ptr<VideoRenderer>(std::make_unique<VKEngineRenderer>());

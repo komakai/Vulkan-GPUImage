@@ -2,8 +2,7 @@
 // Created by glumes on 2021/3/6.
 //
 
-#ifndef VULKANCAMERA_EFFECTFILTER_H
-#define VULKANCAMERA_EFFECTFILTER_H
+#pragma once
 
 #include <VulkanFilter.h>
 
@@ -11,12 +10,6 @@ class EffectFilter : public VulkanFilter {
 
 public:
 
-    EffectFilter():VulkanFilter(){
-        pVertexShader = showVertexShader;
-        pFragShader = showFragShader;
-    }
+    EffectFilter():VulkanFilter() {}
 
 };
-
-
-#endif //VULKANCAMERA_EFFECTFILTER_H

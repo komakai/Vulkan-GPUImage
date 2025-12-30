@@ -27,6 +27,7 @@ void VKOffScreen::createOffscreen(VKDeviceManager *deviceInfo, VKSwapChainManage
         image.format = swapchain->displayFormat,
         image.extent.width = static_cast<uint32_t>(offscreenPass.width),
         image.extent.height = static_cast<uint32_t>(offscreenPass.height),
+        image.extent.depth = 1,
         image.mipLevels = 1,
         image.arrayLayers = 1,
         image.samples = VK_SAMPLE_COUNT_1_BIT,
@@ -42,17 +43,17 @@ void VKOffScreen::createOffscreen(VKDeviceManager *deviceInfo, VKSwapChainManage
         };
 
         VkMemoryRequirements mem_reqs;
-        CALL_VK(vkCreateImage(deviceInfo->device, &image, nullptr,&offscreenPass.color[i].image));
+        CALL_VK(vkCreateImage(deviceInfo->device, &image, nullptr,&offscreenPass.color[i].image))
 
         vkGetImageMemoryRequirements(deviceInfo->device, offscreenPass.color[i].image, &mem_reqs);
 
         mem_alloc.allocationSize = mem_reqs.size;
         VK_CHECK(allocateMemoryTypeFromProperties(deviceInfo,mem_reqs.memoryTypeBits,
                                                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                                                  &mem_alloc.memoryTypeIndex));
+                                                  &mem_alloc.memoryTypeIndex))
 
-        CALL_VK(vkAllocateMemory(deviceInfo->device, &mem_alloc, nullptr, &offscreenPass.color[i].mem));
-        CALL_VK(vkBindImageMemory(deviceInfo->device, offscreenPass.color[i].image, offscreenPass.color[i].mem, 0));
+        CALL_VK(vkAllocateMemory(deviceInfo->device, &mem_alloc, nullptr, &offscreenPass.color[i].mem))
+        CALL_VK(vkBindImageMemory(deviceInfo->device, offscreenPass.color[i].image, offscreenPass.color[i].mem, 0))
 
         VkImageViewCreateInfo colorImageView = {};
         colorImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -75,7 +76,7 @@ void VKOffScreen::createOffscreen(VKDeviceManager *deviceInfo, VKSwapChainManage
         };
 
         CALL_VK(vkCreateImageView(deviceInfo->device, &colorImageView, nullptr,
-                                  &offscreenPass.color[i].view));
+                                  &offscreenPass.color[i].view))
 
         VkSamplerCreateInfo samplerCreateInfo = {};
         samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -95,7 +96,7 @@ void VKOffScreen::createOffscreen(VKDeviceManager *deviceInfo, VKSwapChainManage
         samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
 
         CALL_VK(vkCreateSampler(deviceInfo->device, &samplerCreateInfo, nullptr,
-                                &offscreenPass.sampler[i]));
+                                &offscreenPass.sampler[i]))
 
         VkAttachmentDescription attachmentDescriptions {
                 .format = swapchain->displayFormat,
@@ -111,8 +112,8 @@ void VKOffScreen::createOffscreen(VKDeviceManager *deviceInfo, VKSwapChainManage
 
         VkAttachmentReference colourReference = {0,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
         VkSubpassDescription subpassDescription = {
-                .pipelineBindPoint = VK_PIPELINE_BIND_POINT_BEGIN_RANGE,
                 .flags = 0,
+                .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
                 .inputAttachmentCount = 0,
                 .pInputAttachments = nullptr,
                 .colorAttachmentCount = 1,
@@ -139,7 +140,7 @@ void VKOffScreen::createOffscreen(VKDeviceManager *deviceInfo, VKSwapChainManage
 
 
         CALL_VK(vkCreateRenderPass(deviceInfo->device, &renderPassCreateInfo, nullptr,
-                                   &offscreenPass.renderPass));
+                                   &offscreenPass.renderPass))
 
         VkImageView attachments[1];
         attachments[0] = offscreenPass.color[i].view;
@@ -148,16 +149,16 @@ void VKOffScreen::createOffscreen(VKDeviceManager *deviceInfo, VKSwapChainManage
                 .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
                 .pNext = nullptr,
                 .renderPass = offscreenPass.renderPass,
-                .layers = 1,
                 .attachmentCount = 1,
                 .pAttachments = attachments,
                 .width = static_cast<uint32_t>(offscreenPass.width),
                 .height = static_cast<uint32_t>(offscreenPass.height),
+                .layers = 1,
         };
 
         vkCreateFramebuffer(deviceInfo->device,&fbCreateInfo, nullptr,&offscreenPass.frameBuffer[i]);
 
-        offscreenPass.descriptor[i].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+        offscreenPass.descriptor[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         offscreenPass.descriptor[i].imageView = offscreenPass.color[i].view;
         offscreenPass.descriptor[i].sampler = offscreenPass.sampler[i];
     }

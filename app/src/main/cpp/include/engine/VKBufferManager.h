@@ -2,10 +2,9 @@
 // Created by glumes on 2021/2/24.
 //
 
-#ifndef VULKANCAMERA_VKBUFFERMANAGER_H
-#define VULKANCAMERA_VKBUFFERMANAGER_H
+#pragma once
 
-#include <vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 #include <vector>
 #include <string>
 #include <Log.h>
@@ -64,8 +63,3 @@ private:
 
     void copyBuffer(VKDeviceManager * deviceInfo, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 };
-
-
-
-
-#endif //VULKANCAMERA_VKBUFFERMANAGER_H

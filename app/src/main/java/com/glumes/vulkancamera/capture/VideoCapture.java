@@ -3,6 +3,7 @@ package com.glumes.vulkancamera.capture;
 import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.ImageReader;
+import android.util.Log;
 
 import java.nio.ByteBuffer;
 
@@ -24,6 +25,7 @@ public class VideoCapture implements ImageReader.OnImageAvailableListener {
         Image image = imageReader.acquireLatestImage();
         if (image != null) {
             if (mPreviewFrameHandler != null) {
+                Log.i("GILES", "image format: " + image.getFormat());
                 mPreviewFrameHandler.onPreviewFrame(YUV_420_888_data(image), image.getWidth(), image.getHeight());
             }
 

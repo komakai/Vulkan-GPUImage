@@ -4,9 +4,9 @@
 
 #include "HazeFilter.h"
 
-void HazeFilter::setProcess(uint32_t process) {
-    distance = FilterUtil::getProcess(process,-0.3f,0.3f);
-    slope = FilterUtil::getProcess(process,-0.3f,0.3f);
+void HazeFilter::setProgress(uint32_t progress) {
+    distance = FilterUtil::getProgress(static_cast<int>(progress), -0.3f, 0.3f);
+    slope = FilterUtil::getProgress(static_cast<int>(progress), -0.3f, 0.3f);
     pushConstant[0] = distance;
     pushConstant[1] = slope;
 }

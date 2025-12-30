@@ -3,7 +3,7 @@
 //
 
 #include "OffScreenFilter.h"
-#include <VKUtils.h>
+#include <cassert>
 
 int OffScreenFilter::createDescriptorLayout() {
 
@@ -17,11 +17,11 @@ int OffScreenFilter::createDescriptorLayout() {
 
     VkDescriptorSetLayoutCreateInfo info = vks::descriptorSetLayoutCreateInfo(binding.data(), binding.size());
 
-    CALL_VK(vkCreateDescriptorSetLayout(context.device,&info, nullptr,&pipeline.descLayout_));
+    CALL_VK(vkCreateDescriptorSetLayout(context.device,&info, nullptr,&pipeline.descLayout_))
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = vks::pipelineLayoutCreateInfo(&pipeline.descLayout_,1);
 
-    CALL_VK(vkCreatePipelineLayout(context.device,&pipelineLayoutCreateInfo, nullptr,&pipeline.layout_));
+    CALL_VK(vkCreatePipelineLayout(context.device,&pipelineLayoutCreateInfo, nullptr,&pipeline.layout_))
 
     return VK_SUCCESS;
 
@@ -36,11 +36,11 @@ int OffScreenFilter::createDescriptorSet() {
     VkDescriptorPoolCreateInfo poolCreateInfo = vks::descriptorPoolCreateInfo(
             poolSize.size(), poolSize.data(), 2);
 
-    CALL_VK(vkCreateDescriptorPool(context.device,&poolCreateInfo, nullptr,&pipeline.descPool_));
+    CALL_VK(vkCreateDescriptorPool(context.device,&poolCreateInfo, nullptr,&pipeline.descPool_))
 
     VkDescriptorSetAllocateInfo allocateInfo = vks::descriptorSetAllocateInfo(pipeline.descPool_,&pipeline.descLayout_,1);
 
-    CALL_VK(vkAllocateDescriptorSets(context.device,&allocateInfo,&pipeline.descSet_));
+    CALL_VK(vkAllocateDescriptorSets(context.device,&allocateInfo,&pipeline.descSet_))
     return VK_SUCCESS;
 }
 
@@ -80,16 +80,16 @@ int OffScreenFilter::createDescriptorSet() {
 //    std::vector<VkDynamicState> dynamicStateEnables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 //    VkPipelineDynamicStateCreateInfo dynamicState = vks::pipelineDynamicStateCreateInfo(dynamicStateEnables);
 //
-//    VkShaderModule vertexShader, fragmentShader;
-//    buildShader(pVertexShader, VK_SHADER_STAGE_VERTEX_BIT, context.device, &vertexShader);
-//    buildShader(pFragShader, VK_SHADER_STAGE_FRAGMENT_BIT, context.device, &fragmentShader);
+//    VkShaderModule vertShader, fragmentShader;
+//    buildShader(vertShader, VK_SHADER_STAGE_VERTEX_BIT, context.device, &vertShader);
+//    buildShader(fragShader, VK_SHADER_STAGE_FRAGMENT_BIT, context.device, &fragmentShader);
 //
 //    VkPipelineShaderStageCreateInfo shaderStages[2]{
 //            {
 //                    .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 //                    .pNext = nullptr,
 //                    .stage = VK_SHADER_STAGE_VERTEX_BIT,
-//                    .module = vertexShader,
+//                    .module = vertShader,
 //                    .pSpecializationInfo = nullptr,
 //                    .flags = 0,
 //                    .pName = "main",
@@ -121,7 +121,7 @@ int OffScreenFilter::createDescriptorSet() {
 //    CALL_VK(vkCreateGraphicsPipelines(context.device, pipeline.cache_, 1, &pipelineCreateInfo,
 //                                      nullptr, &pipeline.pipeline_));
 //
-//    vkDestroyShaderModule(context.device,vertexShader, nullptr);
+//    vkDestroyShaderModule(context.device,vertShader, nullptr);
 //    vkDestroyShaderModule(context.device,fragmentShader, nullptr);
 //    return 0;
 //}
@@ -131,7 +131,7 @@ int OffScreenFilter::createDescriptorSet() {
 //    return VK_SUCCESS;
 //}
 
-int OffScreenFilter::init(VkDevice device, VkRenderPass renderPass) {
+/*int OffScreenFilter::init(VkDevice device, VkRenderPass renderPass, std::shared_ptr<AssetLoader> assetLoader) {
     if (isInit){
         return VK_SUCCESS;
     }
@@ -143,7 +143,7 @@ int OffScreenFilter::init(VkDevice device, VkRenderPass renderPass) {
     createDescriptorSet();
     isInit = true;
     return VK_SUCCESS;
-}
+}*/
 
 //int OffScreenFilter::buildRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass,
 //                                     VkFramebuffer framebuffer) {

@@ -2,12 +2,11 @@
 // Created by glumes on 2021/2/28.
 //
 
-#ifndef VULKANCAMERA_VULKANFILTER_H
-#define VULKANCAMERA_VULKANFILTER_H
+#pragma once
 
-#include <vulkan_wrapper.h>
-
+#include <vulkan/vulkan.h>
 #include <FilterDefine.h>
+#include "AssetLoader.h"
 
 // 对于有纹理的 filter ，另起一个基类
 // filter 里面设置 command 信息
@@ -22,18 +21,19 @@
 #include <Log.h>
 #include <array>
 #include <VKShaders.h>
-#include <VKUtils.h>
 #include <FilterUtil.h>
 
 class VulkanFilter {
 
 public:
 
-    VulkanFilter() : pVertexShader(showVertexShader), pFragShader(showFragShader) {
+    VulkanFilter(const std::string& vertShader, const std::string& fragShader) : vertShader(vertShader), fragShader(fragShader) {
         pushConstant.resize(0);
     }
 
-    virtual int init(VkDevice device,VkRenderPass renderPass);
+    VulkanFilter() : VulkanFilter(showVertexShader, showFragShader) {}
+
+    virtual int init(VkDevice device, VkRenderPass renderPass, const std::shared_ptr<AssetLoader>& assetLoader);
 
     virtual int buildRenderPass(VkCommandBuffer commandBuffer,VkRenderPass renderPass,VkFramebuffer framebuffer);
 
@@ -46,17 +46,17 @@ public:
 
     virtual int updateDescriptorSet(std::vector<VkDescriptorBufferInfo>& bufferInfo,std::vector<VkDescriptorImageInfo>& imageInfo);
 
-    virtual int updateBufferDescriptorSet(std::vector<VkDescriptorBufferInfo>& bufferInfo,int binding = 0);
+    virtual int updateBufferDescriptorSet(std::vector<VkDescriptorBufferInfo>& bufferInfo, int binding);
 
-    virtual int updateImageDescriptorSet(std::vector<VkDescriptorImageInfo>& imageInfo,int binding = 0 );
+    virtual int updateImageDescriptorSet(std::vector<VkDescriptorImageInfo>& imageInfo, int binding);
 
-    virtual void setProcess(uint32_t process);
+    virtual void setProgress(uint32_t progress);
 private:
 
 protected:
 
-    const char* pVertexShader = showVertexShader;
-    const char* pFragShader = showFragShader;
+    const std::string& vertShader;
+    const std::string& fragShader;
 
 
     virtual int createDescriptorLayout();
@@ -80,8 +80,6 @@ protected:
 
     bool isInit = false;
 
-    uint32_t mProcess ;
+    uint32_t mProgress ;
+    std::shared_ptr<AssetLoader> m_assetLoader;
 };
-
-
-#endif //VULKANCAMERA_VULKANFILTER_H

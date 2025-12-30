@@ -40,6 +40,7 @@ void VKTextureManager::createTexture(VKDeviceManager* deviceInfo, uint8_t* m_pBu
         VkImageViewCreateInfo view {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
                 .pNext = nullptr,
+                .flags = 0,
                 .image = VK_NULL_HANDLE,
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
                 .format = kTextureFormat,
@@ -47,18 +48,17 @@ void VKTextureManager::createTexture(VKDeviceManager* deviceInfo, uint8_t* m_pBu
                         VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
                         VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A},
                 .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-                .flags = 0,
         };
 
-        CALL_VK(vkCreateSampler(deviceInfo->device, &sampler, nullptr, &textures[i].sampler));
+        CALL_VK(vkCreateSampler(deviceInfo->device, &sampler, nullptr, &textures[i].sampler))
         view.image = textures[i].image;
-        CALL_VK(vkCreateImageView(deviceInfo->device, &view, nullptr, &textures[i].view));
+        CALL_VK(vkCreateImageView(deviceInfo->device, &view, nullptr, &textures[i].view))
     }
 
 }
 
 
-void VKTextureManager::createImgTexture(VKDeviceManager *deviceInfo, AAssetManager* manager) {
+void VKTextureManager::createImgTexture(VKDeviceManager *deviceInfo, const std::shared_ptr<AssetLoader>& manager) {
     const char* textTexFiles = "sample_tex.png";
 
 
@@ -86,6 +86,7 @@ void VKTextureManager::createImgTexture(VKDeviceManager *deviceInfo, AAssetManag
     VkImageViewCreateInfo view = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .pNext = nullptr,
+            .flags = 0,
             .image = VK_NULL_HANDLE,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .format = VK_FORMAT_R8G8B8A8_UNORM,
@@ -95,18 +96,17 @@ void VKTextureManager::createImgTexture(VKDeviceManager *deviceInfo, AAssetManag
                             VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A,
                     },
             .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-            .flags = 0,
     };
 
     CALL_VK(vkCreateSampler(deviceInfo->device, &sampler, nullptr,
-                            &testTextures[0].sampler));
+                            &testTextures[0].sampler))
     view.image = testTextures[0].image;
     CALL_VK(
-            vkCreateImageView(deviceInfo->device, &view, nullptr, &testTextures[0].view));
+            vkCreateImageView(deviceInfo->device, &view, nullptr, &testTextures[0].view))
 }
 
 VkResult
-VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManager* manager, const char *filePath, VKTextureManager::texture_object *tex_obj,
+VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, const std::shared_ptr<AssetLoader>& assetLoader, const char *filePath, VKTextureManager::texture_object *tex_obj,
                                       VkImageUsageFlags usage, VkFlags required_props) {
     if (!(usage | required_props)) {
         __android_log_print(ANDROID_LOG_ERROR, "tutorial texture",
@@ -128,17 +128,12 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
     }
 
 //    // Read the file:
-    AAsset* file = AAssetManager_open(manager,
-                                      filePath, AASSET_MODE_BUFFER);
-    size_t fileLength = AAsset_getLength(file);
-    stbi_uc* fileContent = new unsigned char[fileLength];
-    AAsset_read(file, fileContent, fileLength);
-    AAsset_close(file);
-
+    std::vector<uint8_t> buffer;
+    assetLoader->loadAsset(filePath, buffer);
 
     uint32_t imgWidth, imgHeight, n;
     unsigned char* imageData = stbi_load_from_memory(
-            fileContent, fileLength, reinterpret_cast<int*>(&imgWidth),
+            buffer.data(), buffer.size(), reinterpret_cast<int*>(&imgWidth),
             reinterpret_cast<int*>(&imgHeight), reinterpret_cast<int*>(&n), 4);
     assert(n == 4);
 //
@@ -149,6 +144,7 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
     VkImageCreateInfo image_create_info = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .pNext = nullptr,
+            .flags = 0,
             .imageType = VK_IMAGE_TYPE_2D,
             .format = kTexFmt,
             .extent = {static_cast<uint32_t>(imgWidth),
@@ -163,7 +159,6 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
             .queueFamilyIndexCount = 1,
             .pQueueFamilyIndices = &deviceInfo->queueFamilyIndex,
             .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
-            .flags = 0,
     };
     VkMemoryAllocateInfo mem_alloc = {
             .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -174,7 +169,7 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
 
     VkMemoryRequirements mem_reqs;
     CALL_VK(vkCreateImage(deviceInfo->device, &image_create_info, nullptr,
-                          &tex_obj->image));
+                          &tex_obj->image))
     vkGetImageMemoryRequirements(deviceInfo->device, tex_obj->image, &mem_reqs);
     mem_alloc.allocationSize = mem_reqs.size;
 
@@ -184,10 +179,10 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
 
     VK_CHECK(allocateMemoryTypeFromProperties(deviceInfo,
                                               mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-                                              &mem_alloc.memoryTypeIndex));
+                                              &mem_alloc.memoryTypeIndex))
 
-    CALL_VK(vkAllocateMemory(deviceInfo->device, &mem_alloc, nullptr, &tex_obj->mem));
-    CALL_VK(vkBindImageMemory(deviceInfo->device, tex_obj->image, tex_obj->mem, 0));
+    CALL_VK(vkAllocateMemory(deviceInfo->device, &mem_alloc, nullptr, &tex_obj->mem))
+    CALL_VK(vkBindImageMemory(deviceInfo->device, tex_obj->image, tex_obj->mem, 0))
 
     if (required_props & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
         const VkImageSubresource subres = {
@@ -199,10 +194,10 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
         vkGetImageSubresourceLayout(deviceInfo->device, tex_obj->image, &subres,
                                     &layout);
         CALL_VK(vkMapMemory(deviceInfo->device, tex_obj->mem, 0,
-                            mem_alloc.allocationSize, 0, &data));
+                            mem_alloc.allocationSize, 0, &data))
 
         for (int32_t y = 0; y < imgHeight; y++) {
-            unsigned char* row = (unsigned char*)((char*)data + layout.rowPitch * y);
+            auto* row = (unsigned char*)((char*)data + layout.rowPitch * y);
             for (int32_t x = 0; x < imgWidth; x++) {
                 row[x * 4] = imageData[(x + y * imgWidth) * 4];
                 row[x * 4 + 1] = imageData[(x + y * imgWidth) * 4 + 1];
@@ -214,7 +209,6 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
         vkUnmapMemory(deviceInfo->device, tex_obj->mem);
         stbi_image_free(imageData);
     }
-    delete[] fileContent;
 
     tex_obj->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
@@ -227,7 +221,7 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
 
     VkCommandPool cmdPool;
     CALL_VK(vkCreateCommandPool(deviceInfo->device, &cmdPoolCreateInfo, nullptr,
-                                &cmdPool));
+                                &cmdPool))
 
     VkCommandBuffer gfxCmd;
     const VkCommandBufferAllocateInfo cmd = {
@@ -238,13 +232,13 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
             .commandBufferCount = 1,
     };
 
-    CALL_VK(vkAllocateCommandBuffers(deviceInfo->device, &cmd, &gfxCmd));
+    CALL_VK(vkAllocateCommandBuffers(deviceInfo->device, &cmd, &gfxCmd))
     VkCommandBufferBeginInfo cmd_buf_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             .pNext = nullptr,
             .flags = 0,
             .pInheritanceInfo = nullptr};
-    CALL_VK(vkBeginCommandBuffer(gfxCmd, &cmd_buf_info));
+    CALL_VK(vkBeginCommandBuffer(gfxCmd, &cmd_buf_info))
 
     // If linear is supported, we are done
     VkImage stageImage = VK_NULL_HANDLE;
@@ -267,7 +261,7 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
                 VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
         image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         CALL_VK(vkCreateImage(deviceInfo->device, &image_create_info, nullptr,
-                              &tex_obj->image));
+                              &tex_obj->image))
         vkGetImageMemoryRequirements(deviceInfo->device, tex_obj->image, &mem_reqs);
 
         mem_alloc.allocationSize = mem_reqs.size;
@@ -277,11 +271,11 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
 
         VK_CHECK(allocateMemoryTypeFromProperties(deviceInfo,
                                                   mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                                                  &mem_alloc.memoryTypeIndex));
+                                                  &mem_alloc.memoryTypeIndex))
 
         CALL_VK(
-                vkAllocateMemory(deviceInfo->device, &mem_alloc, nullptr, &tex_obj->mem));
-        CALL_VK(vkBindImageMemory(deviceInfo->device, tex_obj->image, tex_obj->mem, 0));
+                vkAllocateMemory(deviceInfo->device, &mem_alloc, nullptr, &tex_obj->mem))
+        CALL_VK(vkBindImageMemory(deviceInfo->device, tex_obj->image, tex_obj->mem, 0))
 
         // transitions image out of UNDEFINED type
         setImageLayout(gfxCmd, stageImage, VK_IMAGE_LAYOUT_PREINITIALIZED,
@@ -291,23 +285,33 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                        VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
         VkImageCopy bltInfo{
-                .srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .srcSubresource.mipLevel = 0,
-                .srcSubresource.baseArrayLayer = 0,
-                .srcSubresource.layerCount = 1,
-                .srcOffset.x = 0,
-                .srcOffset.y = 0,
-                .srcOffset.z = 0,
-                .dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .dstSubresource.mipLevel = 0,
-                .dstSubresource.baseArrayLayer = 0,
-                .dstSubresource.layerCount = 1,
-                .dstOffset.x = 0,
-                .dstOffset.y = 0,
-                .dstOffset.z = 0,
-                .extent.width = imgWidth,
-                .extent.height = imgHeight,
-                .extent.depth = 1,
+                .srcSubresource {
+                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                        .mipLevel = 0,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1
+                },
+                .srcOffset {
+                        .x = 0,
+                        .y = 0,
+                        .z = 0
+                },
+                .dstSubresource {
+                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                        .mipLevel = 0,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1
+                },
+                .dstOffset {
+                        .x = 0,
+                        .y = 0,
+                        .z = 0
+                },
+                .extent {
+                        .width = imgWidth,
+                        .height = imgHeight,
+                        .depth = 1
+                }
         };
         vkCmdCopyImage(gfxCmd, stageImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                        tex_obj->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
@@ -319,18 +323,18 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
     }
 
-    CALL_VK(vkEndCommandBuffer(gfxCmd));
+    CALL_VK(vkEndCommandBuffer(gfxCmd))
     VkFenceCreateInfo fenceInfo = {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
     };
     VkFence fence;
-    CALL_VK(vkCreateFence(deviceInfo->device, &fenceInfo, nullptr, &fence));
+    CALL_VK(vkCreateFence(deviceInfo->device, &fenceInfo, nullptr, &fence))
 
     VkSubmitInfo submitInfo = {
-            .pNext = nullptr,
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
             .waitSemaphoreCount = 0,
             .pWaitSemaphores = nullptr,
             .pWaitDstStageMask = nullptr,
@@ -339,9 +343,9 @@ VKTextureManager::LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManage
             .signalSemaphoreCount = 0,
             .pSignalSemaphores = nullptr,
     };
-    CALL_VK(vkQueueSubmit(deviceInfo->queue, 1, &submitInfo, fence) != VK_SUCCESS);
+    CALL_VK(vkQueueSubmit(deviceInfo->queue, 1, &submitInfo, fence) != VK_SUCCESS)
     CALL_VK(vkWaitForFences(deviceInfo->device, 1, &fence, VK_TRUE, 100000000) !=
-            VK_SUCCESS);
+            VK_SUCCESS)
     vkDestroyFence(deviceInfo->device, fence, nullptr);
 
     vkFreeCommandBuffers(deviceInfo->device, cmdPool, 1, &gfxCmd);
@@ -380,6 +384,7 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
     VkImageCreateInfo imageCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .pNext = nullptr,
+            .flags = 0,
             .imageType = VK_IMAGE_TYPE_2D,
             .format = kTextureFormat,
             .extent = {static_cast<uint32_t>(texture->width), static_cast<uint32_t>(texture->height), 1},
@@ -394,7 +399,6 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
             .queueFamilyIndexCount = 1,
             .pQueueFamilyIndices = &deviceInfo->queueFamilyIndex,
             .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
-            .flags = 0,
     };
 
     VkMemoryAllocateInfo memAlloc = {
@@ -405,15 +409,15 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
     };
 
     VkMemoryRequirements memReqs;
-    CALL_VK(vkCreateImage(deviceInfo->device, &imageCreateInfo, nullptr, &texture->image));
+    CALL_VK(vkCreateImage(deviceInfo->device, &imageCreateInfo, nullptr, &texture->image))
     vkGetImageMemoryRequirements(deviceInfo->device, texture->image, &memReqs);
     memAlloc.allocationSize = memReqs.size;
     VK_CHECK(allocateMemoryTypeFromProperties(deviceInfo,memReqs.memoryTypeBits,
                                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-                                              &memAlloc.memoryTypeIndex));
+                                              &memAlloc.memoryTypeIndex))
 
-    CALL_VK(vkAllocateMemory(deviceInfo->device, &memAlloc, nullptr, &texture->mem));
-    CALL_VK(vkBindImageMemory(deviceInfo->device, texture->image, texture->mem, 0));
+    CALL_VK(vkAllocateMemory(deviceInfo->device, &memAlloc, nullptr, &texture->mem))
+    CALL_VK(vkBindImageMemory(deviceInfo->device, texture->image, texture->mem, 0))
 
     if (required_props & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
         const VkImageSubresource subres = {
@@ -421,7 +425,7 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
         };
         // 查询资源的布局信息
         vkGetImageSubresourceLayout(deviceInfo->device, texture->image, &subres, &texture->layout);
-        CALL_VK(vkMapMemory(deviceInfo->device, texture->mem, 0, memAlloc.allocationSize, 0, &texture->mapped));
+        CALL_VK(vkMapMemory(deviceInfo->device, texture->mem, 0, memAlloc.allocationSize, 0, &texture->mapped))
 
         copyTextureData(texture, buffer + offset);
     }
@@ -437,7 +441,7 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
     };
 
     VkCommandPool cmdPool;
-    CALL_VK(vkCreateCommandPool(deviceInfo->device, &cmdPoolCreateInfo, nullptr, &cmdPool));
+    CALL_VK(vkCreateCommandPool(deviceInfo->device, &cmdPoolCreateInfo, nullptr, &cmdPool))
 
     VkCommandBuffer gfxCmd;
     const VkCommandBufferAllocateInfo cmd = {
@@ -448,13 +452,13 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
             .commandBufferCount = 1,
     };
 
-    CALL_VK(vkAllocateCommandBuffers(deviceInfo->device, &cmd, &gfxCmd));
+    CALL_VK(vkAllocateCommandBuffers(deviceInfo->device, &cmd, &gfxCmd))
     VkCommandBufferBeginInfo cmdBufferInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             .pNext = nullptr,
             .flags = 0,
             .pInheritanceInfo = nullptr};
-    CALL_VK(vkBeginCommandBuffer(gfxCmd, &cmdBufferInfo));
+    CALL_VK(vkBeginCommandBuffer(gfxCmd, &cmdBufferInfo))
 
     // If linear is supported, we are done
     VkImage stageImage = VK_NULL_HANDLE;
@@ -477,16 +481,16 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
                 VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
         imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         CALL_VK(vkCreateImage(deviceInfo->device, &imageCreateInfo, nullptr,
-                              &texture->image));
+                              &texture->image))
         vkGetImageMemoryRequirements(deviceInfo->device, texture->image, &memReqs);
 
         memAlloc.allocationSize = memReqs.size;
         VK_CHECK(allocateMemoryTypeFromProperties(deviceInfo,
                 memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                &memAlloc.memoryTypeIndex));
+                &memAlloc.memoryTypeIndex))
         CALL_VK(
-                vkAllocateMemory(deviceInfo->device, &memAlloc, nullptr, &texture->mem));
-        CALL_VK(vkBindImageMemory(deviceInfo->device, texture->image, texture->mem, 0));
+                vkAllocateMemory(deviceInfo->device, &memAlloc, nullptr, &texture->mem))
+        CALL_VK(vkBindImageMemory(deviceInfo->device, texture->image, texture->mem, 0))
 
         // transitions image out of UNDEFINED type
         setImageLayout(gfxCmd, stageImage, VK_IMAGE_LAYOUT_PREINITIALIZED,
@@ -496,23 +500,33 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                        VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
         VkImageCopy bltInfo{
-                .srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .srcSubresource.mipLevel = 0,
-                .srcSubresource.baseArrayLayer = 0,
-                .srcSubresource.layerCount = 1,
-                .srcOffset.x = 0,
-                .srcOffset.y = 0,
-                .srcOffset.z = 0,
-                .dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .dstSubresource.mipLevel = 0,
-                .dstSubresource.baseArrayLayer = 0,
-                .dstSubresource.layerCount = 1,
-                .dstOffset.x = 0,
-                .dstOffset.y = 0,
-                .dstOffset.z = 0,
-                .extent.width = static_cast<uint32_t>(texture->width),
-                .extent.height = static_cast<uint32_t>(texture->height),
-                .extent.depth = 1,
+                .srcSubresource {
+                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                        .mipLevel = 0,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1
+                },
+                .srcOffset {
+                        .x = 0,
+                        .y = 0,
+                        .z = 0
+                },
+                .dstSubresource {
+                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                        .mipLevel = 0,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1
+                },
+                .dstOffset {
+                        .x = 0,
+                        .y = 0,
+                        .z = 0
+                },
+                .extent {
+                        .width = static_cast<uint32_t>(texture->width),
+                        .height = static_cast<uint32_t>(texture->height),
+                        .depth = 1
+                }
         };
         vkCmdCopyImage(gfxCmd, stageImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                        texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
@@ -524,18 +538,18 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
     }
 
-    CALL_VK(vkEndCommandBuffer(gfxCmd));
+    CALL_VK(vkEndCommandBuffer(gfxCmd))
     VkFenceCreateInfo fenceInfo = {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
     };
     VkFence fence;
-    CALL_VK(vkCreateFence(deviceInfo->device, &fenceInfo, nullptr, &fence));
+    CALL_VK(vkCreateFence(deviceInfo->device, &fenceInfo, nullptr, &fence))
 
     VkSubmitInfo submitInfo = {
-            .pNext = nullptr,
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
             .waitSemaphoreCount = 0,
             .pWaitSemaphores = nullptr,
             .pWaitDstStageMask = nullptr,
@@ -544,8 +558,8 @@ VkResult VKTextureManager::loadTexture(VKDeviceManager* deviceInfo, uint8_t *buf
             .signalSemaphoreCount = 0,
             .pSignalSemaphores = nullptr,
     };
-    CALL_VK(vkQueueSubmit(deviceInfo->queue, 1, &submitInfo, fence) != VK_SUCCESS);
-    CALL_VK(vkWaitForFences(deviceInfo->device, 1, &fence, VK_TRUE, 100000000) != VK_SUCCESS);
+    CALL_VK(vkQueueSubmit(deviceInfo->queue, 1, &submitInfo, fence) != VK_SUCCESS)
+    CALL_VK(vkWaitForFences(deviceInfo->device, 1, &fence, VK_TRUE, 100000000) != VK_SUCCESS)
     vkDestroyFence(deviceInfo->device, fence, nullptr);
 
     vkFreeCommandBuffers(deviceInfo->device, cmdPool, 1, &gfxCmd);
@@ -583,7 +597,7 @@ void VKTextureManager::setImageLayout(VkCommandBuffer cmdBuffer, VkImage image,
                                       VkPipelineStageFlags destStages) {
     VkImageMemoryBarrier imageMemoryBarrier = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .pNext = NULL,
+            .pNext = nullptr,
             .srcAccessMask = 0,
             .dstAccessMask = 0,
             .oldLayout = oldImageLayout,
@@ -644,14 +658,14 @@ void VKTextureManager::setImageLayout(VkCommandBuffer cmdBuffer, VkImage image,
             break;
     }
 
-    vkCmdPipelineBarrier(cmdBuffer, srcStages, destStages, 0, 0, NULL, 0, NULL, 1,
+    vkCmdPipelineBarrier(cmdBuffer, srcStages, destStages, 0, 0, nullptr, 0, nullptr, 1,
                          &imageMemoryBarrier);
 }
 
 
 
 void VKTextureManager::copyTextureData(VKTextureManager::VulkanTexture *texture, uint8_t *data) {
-    uint8_t* mappedData = (uint8_t*)texture->mapped;
+    auto* mappedData = (uint8_t*)texture->mapped;
     for (int i = 0; i < texture->height; ++i) {
         memcpy(mappedData, data, texture->width);
         mappedData += texture->layout.rowPitch;
@@ -682,12 +696,12 @@ VKTextureManager::allocateMemoryTypeFromProperties(VKDeviceManager * deviceInfo,
 
 
 void VKTextureManager::deleteTextures(VKDeviceManager *deviceInfo) {
-    for (int i = 0; i < kTextureCount; i++) {
-        vkDestroyImageView(deviceInfo->device, textures[i].view, nullptr);
-        vkDestroyImage(deviceInfo->device, textures[i].image, nullptr);
-        vkDestroySampler(deviceInfo->device, textures[i].sampler, nullptr);
-        vkUnmapMemory(deviceInfo->device, textures[i].mem);
-        vkFreeMemory(deviceInfo->device, textures[i].mem, nullptr);
+    for (auto & texture : textures) {
+        vkDestroyImageView(deviceInfo->device, texture.view, nullptr);
+        vkDestroyImage(deviceInfo->device, texture.image, nullptr);
+        vkDestroySampler(deviceInfo->device, texture.sampler, nullptr);
+        vkUnmapMemory(deviceInfo->device, texture.mem);
+        vkFreeMemory(deviceInfo->device, texture.mem, nullptr);
     }
 }
 

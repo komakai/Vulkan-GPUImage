@@ -2,10 +2,9 @@
 // Created by glumes on 2021/2/23.
 //
 
-#ifndef VULKANCAMERA_VKSWAPCHAINMANAGER_H
-#define VULKANCAMERA_VKSWAPCHAINMANAGER_H
+#pragma once
 
-#include <vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 #include <vector>
 #include <string>
 #include <Log.h>
@@ -16,9 +15,9 @@ class VKRender;
 class VKSwapChainManager {
 
 public:
-    VKSwapChainManager();
+    VKSwapChainManager() = default;
 
-    ~VKSwapChainManager();
+    ~VKSwapChainManager() = default;
 
     int createSwapChain(VKDeviceManager* info);
 
@@ -37,6 +36,3 @@ public:
     std::unique_ptr<VkImage[]> displayImages;
     std::unique_ptr<VkImageView[]> displayViews;
 };
-
-
-#endif //VULKANCAMERA_VKSWAPCHAINMANAGER_H

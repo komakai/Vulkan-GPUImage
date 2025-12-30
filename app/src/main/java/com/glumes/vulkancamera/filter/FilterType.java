@@ -9,5 +9,6 @@ public enum FilterType {
     GAMMA_FILTER_TYPE,
     CONTRAST_FILTER_TYPE,
     HAZE_FILTER_TYPE,
+    COLOR_INVERT_FILTER_TYPE,
 }
 

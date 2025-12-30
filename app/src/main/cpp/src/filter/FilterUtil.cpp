@@ -9,7 +9,7 @@
 #include <ColorInvertFilter.h>
 #include <FilterType.h>
 #include <ExposureFilter.h>
-#include <GammFilter.h>
+#include <GammaFilter.h>
 #include <ContrastFilter.h>
 #include <HazeFilter.h>
 
@@ -21,12 +21,12 @@ VulkanFilter* FilterUtil::getFilterByType(int type) {
             return new RGBFilter();
         case MIRROR_FILTER_TYPE:
             return new MirrorFilter();
-        case REVERT_FILTER_TYPE:
+        case COLOR_INVERT_FILTER_TYPE:
             return new ColorInvertFilter();
         case EXPOSURE_FILTER_TYPE:
             return new ExposureFilter();
         case GAMMA_FILTER_TYPE:
-            return new GammFilter();
+            return new GammaFilter();
         case CONTRAST_FILTER_TYPE:
             return new ContrastFilter();
         case HAZE_FILTER_TYPE:
@@ -37,6 +37,6 @@ VulkanFilter* FilterUtil::getFilterByType(int type) {
     return new VulkanFilter();
 }
 
-float FilterUtil::getProcess(int progress, float start, float end) {
-    return (end - start) * progress / 100.0f + start;
+float FilterUtil::getProgress(int progress, float start, float end) {
+    return (end - start) * (float)progress / 100.0f + start;
 }

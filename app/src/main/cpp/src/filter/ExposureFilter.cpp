@@ -4,8 +4,8 @@
 
 #include "ExposureFilter.h"
 
-void ExposureFilter::setProcess(uint32_t process) {
-    exposure = FilterUtil::getProcess(process,-10.0f,10.0f);
+void ExposureFilter::setProgress(uint32_t progress) {
+    exposure = FilterUtil::getProgress(static_cast<int>(progress), -10.0f, 10.0f);
     pushConstant[0] = exposure;
 }
 

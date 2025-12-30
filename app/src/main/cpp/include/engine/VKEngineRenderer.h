@@ -2,11 +2,10 @@
 // Created by glumes on 2021/2/23.
 //
 
-#ifndef VULKANCAMERA_VKENGINERENDERER_H
-#define VULKANCAMERA_VKENGINERENDERER_H
+#pragma once
 
 #include "VideoRenderer.h"
-#include <vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
@@ -27,18 +26,18 @@ class VKEngineRenderer : public VideoRenderer{
 
 public:
     VKEngineRenderer();
-    virtual ~VKEngineRenderer();
+    ~VKEngineRenderer() override;
 
-    virtual void init(ANativeWindow* window, size_t width, size_t height,AAssetManager* manager) override;
-    virtual void render() override;
-    virtual void updateFrame(const video_frame& frame) override;
-    virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation) override;
-    virtual void setParameters(uint32_t params) override;
-    virtual void setProcess(uint32_t process) override ;
-    virtual uint32_t getParameters() override;
-    virtual bool createTextures() override;
-    virtual bool updateTextures() override;
-    virtual void deleteTextures() override;
+    void init(ANativeWindow* window, size_t width, size_t height,AAssetManager* manager) override;
+    void render() override;
+    void updateFrame(const video_frame& frame) override;
+    void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation) override;
+    void setParameters(uint32_t params) override;
+    void setProgress(uint32_t progress) override;
+    uint32_t getParameters() override;
+    bool createTextures() override;
+    bool updateTextures() override;
+    void deleteTextures() override;
 
 private:
 
@@ -72,11 +71,12 @@ private:
     VulkanFilter* effectFilter;
 
     size_t m_filter = 0;
-    uint32_t m_CurrentProcess = 0;
-    uint32_t m_LastProcess = 0;
+    uint32_t m_CurrentProgress = 0;
+    uint32_t m_LastProgress = 0;
 
     void createOffscreenReaderPassAndFramebuffer();
+
+    bool m_enableValidationLayers = false;
+
+    static bool checkValidationLayerSupport();
 };
-
-
-#endif //VULKANCAMERA_VKENGINERENDERER_H

@@ -3,4 +3,3 @@
 //
 
 #include "EffectFilter.h"
-#include <VKUtils.h>

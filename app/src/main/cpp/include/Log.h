@@ -1,5 +1,4 @@
-#ifndef _LOG_H_
-#define _LOG_H_
+#pragma once
 
 #include <android/log.h>
 
@@ -23,6 +22,3 @@
 
 // A macro to check value is VK_SUCCESS
 #define VK_CHECK(x) CALL_VK(x)
-
-
-#endif // _LOG_H_

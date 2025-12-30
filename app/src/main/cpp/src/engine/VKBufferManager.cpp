@@ -6,6 +6,8 @@
 #include "VKBufferManager.h"
 #include <VKDefine.h>
 #include <CommonUtils.h>
+#include <vulkan/vulkan.h>
+#include <cassert>
 
 void VKBufferManager::createBuffer(VKDeviceManager * deviceInfo, VkDeviceSize size, VkBufferUsageFlags usage,
                                    VkMemoryPropertyFlags properties, VkBuffer &buffer,
@@ -13,15 +15,15 @@ void VKBufferManager::createBuffer(VKDeviceManager * deviceInfo, VkDeviceSize si
     VkBufferCreateInfo bufferInfo {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
             .pNext = nullptr,
+            .flags = 0,
             .size = size,
             .usage = usage,
-            .flags = 0,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .queueFamilyIndexCount = 1,
             .pQueueFamilyIndices = &deviceInfo->queueFamilyIndex,
     };
 
-    CALL_VK(vkCreateBuffer(deviceInfo->device, &bufferInfo, nullptr, &buffer));
+    CALL_VK(vkCreateBuffer(deviceInfo->device, &bufferInfo, nullptr, &buffer))
 
 
     VkMemoryRequirements memReq;
@@ -37,8 +39,8 @@ void VKBufferManager::createBuffer(VKDeviceManager * deviceInfo, VkDeviceSize si
     // Assign the proper memory type for that buffer
     mapMemoryTypeToIndex(deviceInfo,memReq.memoryTypeBits, properties, &allocInfo.memoryTypeIndex);
     // Allocate memory for the buffer
-    CALL_VK(vkAllocateMemory(deviceInfo->device, &allocInfo, nullptr, &bufferMemory));
-    CALL_VK(vkBindBufferMemory(deviceInfo->device, buffer, bufferMemory, 0));
+    CALL_VK(vkAllocateMemory(deviceInfo->device, &allocInfo, nullptr, &bufferMemory))
+    CALL_VK(vkBindBufferMemory(deviceInfo->device, buffer, bufferMemory, 0))
 }
 
 void VKBufferManager::copyBuffer(VKDeviceManager *deviceInfo, VkBuffer srcBuffer, VkBuffer dstBuffer,
@@ -52,7 +54,7 @@ void VKBufferManager::copyBuffer(VKDeviceManager *deviceInfo, VkBuffer srcBuffer
     };
 
     VkCommandPool cmdPool;
-    CALL_VK(vkCreateCommandPool(deviceInfo->device, &cmdPoolCreateInfo, nullptr, &cmdPool));
+    CALL_VK(vkCreateCommandPool(deviceInfo->device, &cmdPoolCreateInfo, nullptr, &cmdPool))
 
     VkCommandBuffer cmdBuffer;
     const VkCommandBufferAllocateInfo cmd = {
@@ -63,13 +65,13 @@ void VKBufferManager::copyBuffer(VKDeviceManager *deviceInfo, VkBuffer srcBuffer
             .commandBufferCount = 1,
     };
 
-    CALL_VK(vkAllocateCommandBuffers(deviceInfo->device, &cmd, &cmdBuffer));
+    CALL_VK(vkAllocateCommandBuffers(deviceInfo->device, &cmd, &cmdBuffer))
     VkCommandBufferBeginInfo cmdBufferInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             .pNext = nullptr,
             .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
             .pInheritanceInfo = nullptr};
-    CALL_VK(vkBeginCommandBuffer(cmdBuffer, &cmdBufferInfo));
+    CALL_VK(vkBeginCommandBuffer(cmdBuffer, &cmdBufferInfo))
 
     VkBufferCopy copyRegion = {
             .srcOffset = 0,
@@ -78,18 +80,18 @@ void VKBufferManager::copyBuffer(VKDeviceManager *deviceInfo, VkBuffer srcBuffer
     };
     vkCmdCopyBuffer(cmdBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-    CALL_VK(vkEndCommandBuffer(cmdBuffer));
+    CALL_VK(vkEndCommandBuffer(cmdBuffer))
     VkFenceCreateInfo fenceInfo = {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
     };
     VkFence fence;
-    CALL_VK(vkCreateFence(deviceInfo->device, &fenceInfo, nullptr, &fence));
+    CALL_VK(vkCreateFence(deviceInfo->device, &fenceInfo, nullptr, &fence))
 
     VkSubmitInfo submitInfo = {
-            .pNext = nullptr,
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
             .waitSemaphoreCount = 0,
             .pWaitSemaphores = nullptr,
             .pWaitDstStageMask = nullptr,
@@ -98,8 +100,8 @@ void VKBufferManager::copyBuffer(VKDeviceManager *deviceInfo, VkBuffer srcBuffer
             .signalSemaphoreCount = 0,
             .pSignalSemaphores = nullptr,
     };
-    CALL_VK(vkQueueSubmit(deviceInfo->queue, 1, &submitInfo, fence) != VK_SUCCESS);
-    CALL_VK(vkWaitForFences(deviceInfo->device, 1, &fence, VK_TRUE, 100000000) != VK_SUCCESS);
+    CALL_VK(vkQueueSubmit(deviceInfo->queue, 1, &submitInfo, fence) != VK_SUCCESS)
+    CALL_VK(vkWaitForFences(deviceInfo->device, 1, &fence, VK_TRUE, 100000000) != VK_SUCCESS)
     vkDestroyFence(deviceInfo->device, fence, nullptr);
 
     vkFreeCommandBuffers(deviceInfo->device, cmdPool, 1, &cmdBuffer);
@@ -123,7 +125,7 @@ int VKBufferManager::createVertexBuffer(VKDeviceManager *deviceInfo) {
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                  stagingBuffer,stagingBufferMemory);
     void* data = nullptr;
-    CALL_VK(vkMapMemory(deviceInfo->device,stagingBufferMemory,0,bufferSize,0,&data));
+    CALL_VK(vkMapMemory(deviceInfo->device,stagingBufferMemory,0,bufferSize,0,&data))
     memcpy(data,vertices,bufferSize);
     vkUnmapMemory(deviceInfo->device,stagingBufferMemory);
 
@@ -173,7 +175,7 @@ int VKBufferManager::createIndexBuffer(VKDeviceManager *deviceInfo) {
                  stagingBuffer, stagingBufferMemory);
 
     void* data = nullptr;
-    CALL_VK(vkMapMemory(deviceInfo->device, stagingBufferMemory, 0, bufferSize, 0, &data));
+    CALL_VK(vkMapMemory(deviceInfo->device, stagingBufferMemory, 0, bufferSize, 0, &data))
     memcpy(data, indices, bufferSize);
     vkUnmapMemory(deviceInfo->device, stagingBufferMemory);
 
@@ -200,11 +202,11 @@ int VKBufferManager::createUniformBuffers(VKDeviceManager *deviceInfo) {
                  stagingBuffer, stagingBufferMemory);
 
     void* data = nullptr;
-    CALL_VK(vkMapMemory(deviceInfo->device, stagingBufferMemory, 0, bufferSize, 0, &data));
+    CALL_VK(vkMapMemory(deviceInfo->device, stagingBufferMemory, 0, bufferSize, 0, &data))
     memcpy(data, &m_ubo, bufferSize);
     vkUnmapMemory(deviceInfo->device, stagingBufferMemory);
 
-    createBuffer(deviceInfo,bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+    createBuffer(deviceInfo,bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                  uboBuffer, uboBufferMemory);
 
@@ -242,16 +244,16 @@ int VKBufferManager::createShowVertexBuffer(VKDeviceManager *deviceInfo) {
     VkBufferCreateInfo bufferInfo {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
             .pNext = nullptr,
+            .flags = 0,
             .size = sizeof(vertexData),
             .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            .flags = 0,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .queueFamilyIndexCount = 1,
             .pQueueFamilyIndices = &deviceInfo->queueFamilyIndex,
     };
 
     CALL_VK(vkCreateBuffer(deviceInfo->device, &bufferInfo, nullptr,
-                           &showVertexBuffer));
+                           &showVertexBuffer))
 
     VkMemoryRequirements memReq;
     vkGetBufferMemoryRequirements(deviceInfo->device, showVertexBuffer, &memReq);
@@ -267,17 +269,17 @@ int VKBufferManager::createShowVertexBuffer(VKDeviceManager *deviceInfo) {
     mapMemoryTypeToIndex(deviceInfo,memReq.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &allocInfo.memoryTypeIndex);
 
-    CALL_VK(vkAllocateMemory(deviceInfo->device, &allocInfo, nullptr, &showBufferMemory));
+    CALL_VK(vkAllocateMemory(deviceInfo->device, &allocInfo, nullptr, &showBufferMemory))
 
 
     void* data;
     CALL_VK(vkMapMemory(deviceInfo->device, showBufferMemory, 0, allocInfo.allocationSize,
-                        0, &data));
+                        0, &data))
     memcpy(data, vertexData, sizeof(vertexData));
     vkUnmapMemory(deviceInfo->device, showBufferMemory);
 
     CALL_VK(
-            vkBindBufferMemory(deviceInfo->device, showVertexBuffer, showBufferMemory, 0));
+            vkBindBufferMemory(deviceInfo->device, showVertexBuffer, showBufferMemory, 0))
     return 0;
 }
 
@@ -297,7 +299,7 @@ int VKBufferManager::createRGBUniformBuffer(VKDeviceManager *deviceInfo) {
                  stagingBuffer, stagingBufferMemory);
 
     void* data = nullptr;
-    CALL_VK(vkMapMemory(deviceInfo->device, stagingBufferMemory, 0, bufferSize, 0, &data));
+    CALL_VK(vkMapMemory(deviceInfo->device, stagingBufferMemory, 0, bufferSize, 0, &data))
     memcpy(data, &m_rgb, bufferSize);
     vkUnmapMemory(deviceInfo->device, stagingBufferMemory);
 

@@ -181,8 +181,7 @@
          https://code.google.com/p/nvidia-texture-tools/source/browse/trunk/src/nvimage/FloatImage.cpp )
 */
 
-#ifndef STBIR_INCLUDE_STB_IMAGE_RESIZE_H
-#define STBIR_INCLUDE_STB_IMAGE_RESIZE_H
+#pragma once
 
 #ifdef _MSC_VER
 typedef unsigned char  stbir_uint8;
@@ -2586,7 +2585,6 @@ STBIRDEF int stbir_resize_region(  const void *input_pixels , int input_w , int 
         edge_mode_horizontal, edge_mode_vertical, space);
 }
 
-#endif // STB_IMAGE_RESIZE_IMPLEMENTATION
 
 /*
 ------------------------------------------------------------------------------

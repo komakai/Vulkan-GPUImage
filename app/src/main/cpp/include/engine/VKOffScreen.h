@@ -2,10 +2,9 @@
 // Created by glumes on 2021/2/28.
 //
 
-#ifndef VULKANCAMERA_VKOFFSCREEN_H
-#define VULKANCAMERA_VKOFFSCREEN_H
+#pragma once
 
-#include <vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 
 #include <vector>
 
@@ -58,6 +57,3 @@ public:
 
     int num = 2;
 };
-
-
-#endif //VULKANCAMERA_VKOFFSCREEN_H

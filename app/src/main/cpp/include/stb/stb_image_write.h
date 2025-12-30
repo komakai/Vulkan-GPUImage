@@ -147,8 +147,7 @@ LICENSE
 
 */
 
-#ifndef INCLUDE_STB_IMAGE_WRITE_H
-#define INCLUDE_STB_IMAGE_WRITE_H
+#pragma once
 
 #include <stdlib.h>
 
@@ -1571,7 +1570,6 @@ STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const 
 }
 #endif
 
-#endif // STB_IMAGE_WRITE_IMPLEMENTATION
 
 /* Revision history
       1.14  (2020-02-02) updated JPEG writer to downsample chroma channels

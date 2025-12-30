@@ -11,14 +11,7 @@
 #include <FilterDefine.h>
 #include <OffScreenFilter.h>
 #include <EffectFilter.h>
-
-VKRender::VKRender() {
-
-}
-
-VKRender::~VKRender() {
-
-}
+#include <cassert>
 
 int VKRender::createRenderPass(VKDeviceManager *deviceInfo, VKSwapChainManager* swapChainInfo) {
     // Create render pass
@@ -38,8 +31,8 @@ int VKRender::createRenderPass(VKDeviceManager *deviceInfo, VKSwapChainManager* 
             .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
     VkSubpassDescription subpassDescription {
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
             .flags = 0,
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
             .inputAttachmentCount = 0,
             .pInputAttachments = nullptr,
             .colorAttachmentCount = 1,
@@ -59,7 +52,7 @@ int VKRender::createRenderPass(VKDeviceManager *deviceInfo, VKSwapChainManager* 
             .dependencyCount = 0,
             .pDependencies = nullptr,
     };
-    CALL_VK(vkCreateRenderPass(deviceInfo->device, &renderPassCreateInfo, nullptr, &renderPass));
+    CALL_VK(vkCreateRenderPass(deviceInfo->device, &renderPassCreateInfo, nullptr, &renderPass))
     return 0;
 }
 
@@ -77,7 +70,7 @@ int VKRender::createCommandPool(VKDeviceManager *deviceInfo, VKSwapChainManager 
     };
 
     CALL_VK(vkCreateCommandPool(deviceInfo->device, &cmdPoolCreateInfo, nullptr,
-                                &cmdPool));
+                                &cmdPool))
 
     // Record a command buffer that just clear the screen
     // 1 command buffer draw in 1 framebuffer
@@ -91,7 +84,7 @@ int VKRender::createCommandPool(VKDeviceManager *deviceInfo, VKSwapChainManager 
             .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             .commandBufferCount = cmdBufferLen,
     };
-    CALL_VK(vkAllocateCommandBuffers(deviceInfo->device, &cmdBufferCreateInfo, cmdBuffer.get()));
+    CALL_VK(vkAllocateCommandBuffers(deviceInfo->device, &cmdBufferCreateInfo, cmdBuffer.get()))
 
     for (int bufferIndex = 0; bufferIndex < swapChainInfo->swapchainLength; bufferIndex++) {
         // We start by creating and declare the "beginning" our command buffer
@@ -101,7 +94,7 @@ int VKRender::createCommandPool(VKDeviceManager *deviceInfo, VKSwapChainManager 
                 .flags = 0,
                 .pInheritanceInfo = nullptr,
         };
-        CALL_VK(vkBeginCommandBuffer(cmdBuffer[bufferIndex], &cmdBufferBeginInfo));
+        CALL_VK(vkBeginCommandBuffer(cmdBuffer[bufferIndex], &cmdBufferBeginInfo))
 
         // transition the buffer into color attachment
         setImageLayout(cmdBuffer[bufferIndex],
@@ -174,7 +167,7 @@ int VKRender::createCommandPool(VKDeviceManager *deviceInfo, VKSwapChainManager 
                        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-        CALL_VK(vkEndCommandBuffer(cmdBuffer[bufferIndex]));
+        CALL_VK(vkEndCommandBuffer(cmdBuffer[bufferIndex]))
     }
 
     // We need to create a fence to be able, in the main loop, to wait for our
@@ -184,7 +177,7 @@ int VKRender::createCommandPool(VKDeviceManager *deviceInfo, VKSwapChainManager 
             .pNext = nullptr,
             .flags = 0,
     };
-    CALL_VK(vkCreateFence(deviceInfo->device, &fenceCreateInfo, nullptr, &fence));
+    CALL_VK(vkCreateFence(deviceInfo->device, &fenceCreateInfo, nullptr, &fence))
 
 
     // We need to create a semaphore to be able to wait, in the main loop, for our
@@ -194,7 +187,7 @@ int VKRender::createCommandPool(VKDeviceManager *deviceInfo, VKSwapChainManager 
             .pNext = nullptr,
             .flags = 0,
     };
-    CALL_VK(vkCreateSemaphore(deviceInfo->device, &semaphoreCreateInfo, nullptr, &semaphore));
+    CALL_VK(vkCreateSemaphore(deviceInfo->device, &semaphoreCreateInfo, nullptr, &semaphore))
     return 0;
 }
 
@@ -205,7 +198,7 @@ VKRender::setImageLayout(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout
 
     VkImageMemoryBarrier imageMemoryBarrier = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .pNext = NULL,
+            .pNext = nullptr,
             .srcAccessMask = 0,
             .dstAccessMask = 0,
             .oldLayout = oldImageLayout,
@@ -266,11 +259,11 @@ VKRender::setImageLayout(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout
             break;
     }
 
-    vkCmdPipelineBarrier(cmdBuffer, srcStages, destStages, 0, 0, NULL, 0, NULL, 1,
+    vkCmdPipelineBarrier(cmdBuffer, srcStages, destStages, 0, 0, nullptr, 0, nullptr, 1,
                          &imageMemoryBarrier);
 }
 
-int VKRender::deleteCommandPool(VKDeviceManager *deviceInfo) {
+int VKRender::deleteCommandPool(VKDeviceManager *deviceInfo) const {
     vkFreeCommandBuffers(deviceInfo->device, cmdPool, cmdBufferLen, cmdBuffer.get());
     vkDestroyCommandPool(deviceInfo->device, cmdPool, nullptr);
     vkDestroyFence(deviceInfo->device, fence, nullptr);

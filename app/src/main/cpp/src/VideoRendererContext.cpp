@@ -1,16 +1,11 @@
 #include "VideoRendererContext.h"
 #include "Log.h"
 
-VideoRendererContext::jni_fields_t VideoRendererContext::jni_fields = { 0L };
+VideoRendererContext::jni_fields_t VideoRendererContext::jni_fields = { nullptr };
 
 VideoRendererContext::VideoRendererContext(int type)
 {
     m_pVideoRenderer = VideoRenderer::create(type);
-}
-
-VideoRendererContext::~VideoRendererContext()
-{
-
 }
 
 void VideoRendererContext::init(ANativeWindow* window, size_t width, size_t height,AAssetManager* manager)
@@ -50,7 +45,7 @@ void VideoRendererContext::storeContext(JNIEnv *env, jobject obj, VideoRendererC
     // Get a reference to this object's class
     jclass cls = env->GetObjectClass(obj);
 
-    if (NULL == cls)
+    if (cls == nullptr)
     {
         LOGE("Could not find com/media/camera/preview/render/VideoRenderer.");
         return;
@@ -58,7 +53,7 @@ void VideoRendererContext::storeContext(JNIEnv *env, jobject obj, VideoRendererC
 
     // Get the Field ID of the "mNativeContext" variable
     jni_fields.context = env->GetFieldID(cls, "mNativeContext", "J");
-    if (NULL == jni_fields.context)
+    if (jni_fields.context == nullptr)
     {
         LOGE("Could not find mNativeContext.");
         return;
@@ -69,32 +64,32 @@ void VideoRendererContext::storeContext(JNIEnv *env, jobject obj, VideoRendererC
 
 void VideoRendererContext::deleteContext(JNIEnv *env, jobject obj)
 {
-    if (NULL == jni_fields.context)
+    if (jni_fields.context == nullptr)
     {
         LOGE("Could not find mNativeContext.");
         return;
     }
 
-    VideoRendererContext* context = reinterpret_cast<VideoRendererContext*>(env->GetLongField(obj, jni_fields.context));
+    auto context = reinterpret_cast<VideoRendererContext*>(env->GetLongField(obj, jni_fields.context));
 
-    if (context) delete context;
+    delete context;
 
     env->SetLongField(obj, jni_fields.context, 0L);
 }
 
 VideoRendererContext* VideoRendererContext::getContext(JNIEnv *env, jobject obj)
 {
-    if (NULL == jni_fields.context)
+    if (jni_fields.context == nullptr)
     {
         LOGE("Could not find mNativeContext.");
-        return NULL;
+        return nullptr;
     }
 
-    VideoRendererContext* context = reinterpret_cast<VideoRendererContext*>(env->GetLongField(obj, jni_fields.context));
+    auto context = reinterpret_cast<VideoRendererContext*>(env->GetLongField(obj, jni_fields.context));
 
     return context;
 }
 
-void VideoRendererContext::setProcess(uint32_t params) {
-    m_pVideoRenderer->setProcess(params);
+void VideoRendererContext::setProgress(uint32_t params) {
+    m_pVideoRenderer->setProgress(params);
 }

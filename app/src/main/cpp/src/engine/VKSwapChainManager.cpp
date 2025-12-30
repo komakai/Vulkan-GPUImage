@@ -5,14 +5,7 @@
 #include <VKDeviceManager.h>
 #include <VKSwapChainManager.h>
 #include <VKRender.h>
-
-VKSwapChainManager::VKSwapChainManager() {
-
-}
-
-VKSwapChainManager::~VKSwapChainManager() {
-
-}
+#include <cassert>
 
 int VKSwapChainManager::createSwapChain(VKDeviceManager* info) {
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
@@ -46,23 +39,24 @@ int VKSwapChainManager::createSwapChain(VKDeviceManager* info) {
             .imageFormat = formats[chosenFormat].format,
             .imageColorSpace = formats[chosenFormat].colorSpace,
             .imageExtent = surfaceCapabilities.currentExtent,
-            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-            .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
             .imageArrayLayers = 1,
+            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
             .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .queueFamilyIndexCount = 1,
             .pQueueFamilyIndices = &info->queueFamilyIndex,
+            .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+            .compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
             .presentMode = VK_PRESENT_MODE_FIFO_KHR,
-            .oldSwapchain = VK_NULL_HANDLE,
             .clipped = VK_FALSE,
+            .oldSwapchain = VK_NULL_HANDLE,
     };
 
     CALL_VK(vkCreateSwapchainKHR(info->device, &swapchainCreateInfo, nullptr,
-                    &swapchain));
+                    &swapchain))
 
     // Get the length of the created swap chain
     CALL_VK(vkGetSwapchainImagesKHR(info->device, swapchain,
-                                    &swapchainLength, nullptr));
+                                    &swapchainLength, nullptr))
 
     return 0;
 }
@@ -72,11 +66,11 @@ int VKSwapChainManager::createFrameBuffer(VKDeviceManager *deviceInfo, VKRender 
     // query display attachment to swapchain
     uint32_t swapchainImagesCount = 0;
     CALL_VK(vkGetSwapchainImagesKHR(deviceInfo->device, swapchain,
-                                    &swapchainImagesCount, nullptr));
+                                    &swapchainImagesCount, nullptr))
     displayImages = std::make_unique<VkImage[]>(swapchainImagesCount);
     CALL_VK(vkGetSwapchainImagesKHR(deviceInfo->device, swapchain,
                                     &swapchainImagesCount,
-                                    displayImages.get()));
+                                    displayImages.get()))
 
     // create image view for each swapchain image
     displayViews = std::make_unique<VkImageView[]>(swapchainImagesCount);
@@ -84,6 +78,7 @@ int VKSwapChainManager::createFrameBuffer(VKDeviceManager *deviceInfo, VKRender 
         VkImageViewCreateInfo viewCreateInfo = {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
                 .pNext = nullptr,
+                .flags = 0,
                 .image = displayImages[i],
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
                 .format = displayFormat,
@@ -100,9 +95,8 @@ int VKSwapChainManager::createFrameBuffer(VKDeviceManager *deviceInfo, VKRender 
                         .baseArrayLayer = 0,
                         .layerCount = 1,
                 },
-                .flags = 0,
         };
-        CALL_VK(vkCreateImageView(deviceInfo->device, &viewCreateInfo, nullptr, &displayViews[i]));
+        CALL_VK(vkCreateImageView(deviceInfo->device, &viewCreateInfo, nullptr, &displayViews[i]))
     }
 
     // create a framebuffer from each swapchain image
@@ -116,15 +110,15 @@ int VKSwapChainManager::createFrameBuffer(VKDeviceManager *deviceInfo, VKRender 
                 .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
                 .pNext = nullptr,
                 .renderPass = renderInfo->renderPass,
-                .layers = 1,
                 .attachmentCount = 1,  // 2 if using depth
                 .pAttachments = attachments,
                 .width = static_cast<uint32_t>(displaySize.width),
                 .height = static_cast<uint32_t>(displaySize.height),
+                .layers = 1,
         };
         fbCreateInfo.attachmentCount = (depthView == VK_NULL_HANDLE ? 1 : 2);
 
-        CALL_VK(vkCreateFramebuffer(deviceInfo->device, &fbCreateInfo, nullptr, &framebuffers[i]));
+        CALL_VK(vkCreateFramebuffer(deviceInfo->device, &fbCreateInfo, nullptr, &framebuffers[i]))
     }
     return 0;
 }

@@ -17,6 +17,7 @@ public class FilterUtil {
         filterTypes.add(FilterType.GAMMA_FILTER_TYPE);
         filterTypes.add(FilterType.CONTRAST_FILTER_TYPE);
         filterTypes.add(FilterType.HAZE_FILTER_TYPE);
+        filterTypes.add(FilterType.COLOR_INVERT_FILTER_TYPE);
 
 
 

@@ -2,10 +2,9 @@
 // Created by glumes on 2021/2/23.
 //
 
-#ifndef VULKANCAMERA_VKRENDER_H
-#define VULKANCAMERA_VKRENDER_H
+#pragma once
 
-#include <vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 #include <vector>
 #include <string>
 #include <Log.h>
@@ -28,9 +27,9 @@ class EffectFilter;
 class VKRender {
 
 public:
-    VKRender();
+    VKRender() = default;
 
-    ~VKRender();
+    ~VKRender() = default;
 
 
     int createRenderPass(VKDeviceManager *deviceInfo, VKSwapChainManager *swapChainInfo);
@@ -40,7 +39,7 @@ public:
                           VKOffScreen *vkOffScreenInfo,
                           VulkanFilter * filter, OffScreenFilter* offScreenFilter, VulkanFilter* effectFilter);
 
-    int deleteCommandPool(VKDeviceManager *deviceInfo);
+    int deleteCommandPool(VKDeviceManager *deviceInfo) const;
 
     void setImageLayout(VkCommandBuffer cmdBuffer,
                         VkImage image,
@@ -58,6 +57,3 @@ public:
     VkFence fence;
 
 };
-
-
-#endif //VULKANCAMERA_VKRENDER_H

@@ -2,13 +2,11 @@
 // Created by glumes on 2021/2/24.
 //
 
-#ifndef VULKANCAMERA_VKTEXTUREMANAGER_H
-#define VULKANCAMERA_VKTEXTUREMANAGER_H
+#pragma once
 
-#include <vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 #include <cassert>
-#include <android/asset_manager.h>
-#include <android/asset_manager_jni.h>
+#include "AssetLoader.h"
 
 class VKDeviceManager;
 
@@ -51,14 +49,14 @@ public:
     struct texture_object testTextures[1];
 
 
-    VkResult LoadTextureFromFile(VKDeviceManager * deviceInfo, AAssetManager* manager, const char* filePath,
+    VkResult LoadTextureFromFile(VKDeviceManager * deviceInfo, const std::shared_ptr<AssetLoader>& assetLoader, const char* filePath,
                                  struct texture_object* tex_obj,
                                  VkImageUsageFlags usage, VkFlags required_props);
     static const uint32_t kTextureCount = 3;
 
     void createTexture(VKDeviceManager *deviceInfo, uint8_t *m_pBuffer, size_t m_width, size_t m_height);
 
-    void createImgTexture(VKDeviceManager *deviceInfo, AAssetManager* manager);
+    void createImgTexture(VKDeviceManager *deviceInfo, const std::shared_ptr<AssetLoader>& assetLoader);
 
     static const VkFormat kTextureFormat = VK_FORMAT_R8_UNORM;
 
@@ -94,7 +92,3 @@ public:
 
     void updateTextures(VKDeviceManager *deviceInfo, uint8_t *buffer, size_t width, size_t height);
 };
-
-
-
-#endif //VULKANCAMERA_VKTEXTUREMANAGER_H

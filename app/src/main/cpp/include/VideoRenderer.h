@@ -1,13 +1,11 @@
-#ifndef _H_VIDEO_RENDERER_
-#define _H_VIDEO_RENDERER_
+#pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <android/native_window.h>
-
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
-
+#include "AssetLoader.h"
 
 enum { tYUV420, tVK_YUV420, tYUV420_FILTER };
 
@@ -25,7 +23,7 @@ struct video_frame
 class VideoRenderer {
 public:
 	VideoRenderer();
-	virtual ~VideoRenderer();
+	virtual ~VideoRenderer() = default;
 
     static std::unique_ptr<VideoRenderer> create(int type);
 
@@ -34,7 +32,7 @@ public:
 	virtual void updateFrame(const video_frame& frame) = 0;
 	virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation) = 0;
 	virtual void setParameters(uint32_t params) = 0;
-	virtual void setProcess(uint32_t process) = 0;
+	virtual void setProgress(uint32_t progress) = 0;
 	virtual uint32_t getParameters() = 0;
 	virtual bool createTextures() = 0;
 	virtual bool updateTextures() = 0;
@@ -51,7 +49,5 @@ protected:
 	bool isDirty;
 	bool isProgramChanged;
 
-	AAssetManager* aAssetManager;
+    std::shared_ptr<AssetLoader> m_assetLoader;
 };
-
-#endif // _H_VIDEO_RENDERER_

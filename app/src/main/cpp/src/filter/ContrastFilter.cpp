@@ -4,7 +4,7 @@
 
 #include "ContrastFilter.h"
 
-void ContrastFilter::setProcess(uint32_t process) {
-    contrast = FilterUtil::getProcess(process,0.0,2.0f);
+void ContrastFilter::setProgress(uint32_t progress) {
+    contrast = FilterUtil::getProgress(static_cast<int>(progress), 0.0, 2.0f);
     pushConstant[0] = contrast;
 }

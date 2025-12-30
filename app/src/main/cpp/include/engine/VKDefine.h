@@ -2,8 +2,7 @@
 // Created by glumes on 2021/2/24.
 //
 
-#ifndef VULKANCAMERA_VKDEFINE_H
-#define VULKANCAMERA_VKDEFINE_H
+#pragma once
 
 struct Vertex {
     float pos[3];
@@ -22,5 +21,3 @@ struct RGBBufferObject{
     float green;
     float blue;
 };
-
-#endif //VULKANCAMERA_VKDEFINE_H
